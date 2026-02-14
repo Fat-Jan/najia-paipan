@@ -1,0 +1,9 @@
+# FastAPI 六爻排盘 API 依赖
+# 使用 Python 3.9-3.12 兼容版本
+fastapi>=0.100.0,<0.110.0
+uvicorn[standard]>=0.23.0
+pydantic>=2.0.0,<2.6.0
+
+# 六爻排盘核心库 (najia)
+# 从本地路径安装
+-e ./najia
