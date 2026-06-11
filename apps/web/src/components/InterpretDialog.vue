@@ -133,6 +133,12 @@ async function handleInterpret() {
         dong: r.dong,
         bian_name: r.bian?.name,
         hide_name: r.hide?.name,
+        // 变卦/伏神逐爻：供 AI 判动变与飞伏关系，避免瞎编变爻干支
+        bian_qin6: r.bian?.qin6,
+        bian_qinx: r.bian?.qinx,
+        hide_qin6: r.hide?.qin6,
+        hide_qinx: r.hide?.qinx,
+        hide_seat: r.hide?.seat,
       },
       question: question.value,
     })

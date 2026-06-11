@@ -1,4 +1,5 @@
 // 解读接口契约 — 与前端 apps/web/src/types 对齐
+
 export interface HexagramData {
   name: string
   gong: string
@@ -13,6 +14,13 @@ export interface HexagramData {
   dong: number[]
   bian_name?: string
   hide_name?: string
+  // 变卦逐爻（动爻变出的卦象，供 AI 分析动变关系，避免瞎编）
+  bian_qin6?: string[]
+  bian_qinx?: string[]
+  // 伏神逐爻
+  hide_qin6?: string[]
+  hide_qinx?: string[]
+  hide_seat?: number[]
 }
 
 export interface InterpretRequest {
