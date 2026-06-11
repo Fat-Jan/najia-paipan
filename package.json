@@ -1,0 +1,17 @@
+{
+  "name": "najia-liuyao",
+  "version": "0.1.0",
+  "private": true,
+  "description": "六爻纳甲排盘系统 — TypeScript 全栈",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev:web": "pnpm --filter @najia/web dev",
+    "dev:server": "pnpm --filter @najia/server dev"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  }
+}
