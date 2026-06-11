@@ -63,6 +63,27 @@ function buildUserPrompt(info: HexagramData, question: string): string {
     hideSection = `\n伏神：${info.hide_name}`
   }
 
+  // 用神标记：把「问题→用神六亲→爻位」确定化，AI 直接采用不必自行定位
+  let yongshenSection = ''
+  if (info.yongshen) {
+    const y = info.yongshen
+    if (y.yongshen) {
+      const posStr = y.positions.length > 0 ? `第${y.positions.join('、')}爻` : '主卦不上卦'
+      yongshenSection = `\n【用神取用（已据问题判定，直接采用）】\n类别：${y.category}　用神六亲：${y.yongshen}　位置：${posStr}${y.hidden ? `（伏于第${y.hidden_seat.join('、')}爻下）` : ''}\n${y.note}`
+    } else {
+      yongshenSection = `\n【用神取用】\n${y.note}`
+    }
+  }
+
+  // 动变关系：逐动爻本→变全标（core 算好的卦级信号，AI 须采用，不可自行心算）
+  let relationSection = ''
+  if (info.yao_relation && info.yao_relation.changes.length > 0) {
+    const lines = info.yao_relation.changes.map(
+      (c) => `  - 第${c.pos}爻：${c.ben_zhi} → ${c.bian_zhi}，${c.note}`,
+    )
+    relationSection = `\n【动变关系（逐动爻已算定，须直接采用，勿自行推断进退神或生克）】\n${lines.join('\n')}`
+  }
+
   // 主卦逐爻一览：六亲+纳甲+六神对齐，便于 AI 定位用神与各爻关系
   const yaoLines = (info.qin6 ?? []).map((q, i) => {
     const x = info.qinx?.[i] ?? ''
@@ -82,7 +103,7 @@ ${userQuestion}
 【卦象信息】
 主卦：${info.name}（${info.gong}宫）
 卦符：${info.mark}
-世爻位置：${shi ?? '未知'}爻　应爻位置：${ying ?? '未知'}爻
+世爻位置：${shi ?? '未知'}爻　应爻位置：${ying ?? '未知'}爻${yongshenSection}
 
 【主卦逐爻】（六亲·纳甲·六神·月令旺衰）
 ${yaoLines.join('\n')}
@@ -91,7 +112,7 @@ ${yaoLines.join('\n')}
 月建：${info.yue_zhi ?? '未知'}　日辰：${info.ri_chen ?? '未知'}　动爻：${dongStr}
 
 【变卦信息】
-${bianSection}${hideSection}
+${bianSection}${hideSection}${relationSection}
 
 【解读要求】
 1. 先明确"${userQuestion}"对应的用神是哪个六亲，并指出它在第几爻

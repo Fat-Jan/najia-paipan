@@ -21,6 +21,34 @@ export interface HexagramData {
   hide_qin6?: string[]
   hide_qinx?: string[]
   hide_seat?: number[]
+  // 卦爻动变关系（逐爻本→变 + 反吟/伏吟/进退神），core 算好透传
+  yao_relation?: {
+    changes: Array<{
+      pos: number
+      ben_zhi: string
+      bian_zhi: string
+      relation: string
+      fanyin: boolean
+      fuyin: boolean
+      note: string
+    }>
+    fanyin: number[]
+    fanyin_scope: string
+    fuyin: number[]
+    fuyin_scope: string
+    jinshen: number[]
+    tuishen: number[]
+  } | null
+  // 用神标记（问题→用神六亲→爻位）
+  yongshen?: {
+    category: string
+    yongshen: string
+    positions: number[]
+    multiple: boolean
+    hidden: boolean
+    hidden_seat: number[]
+    note: string
+  }
 }
 
 export interface InterpretRequest {

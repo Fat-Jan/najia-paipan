@@ -19,6 +19,9 @@ function normalize(obj: Record<string, unknown>): Record<string, unknown> {
   const o = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>
   const hide = o.hide as { seat?: number[] } | undefined
   if (hide?.seat) hide.seat = [...hide.seat].sort((a, b) => a - b)
+  // yao_relation 是 TS 新增的卦象固有属性，Python 黄金数据无此字段。
+  // 对拍只验「与 Python 一致」的部分；新字段由 relation.test.ts 独立验证正确性。
+  delete o.yao_relation
   return o
 }
 

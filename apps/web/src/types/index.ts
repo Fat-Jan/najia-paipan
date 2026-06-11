@@ -1,7 +1,7 @@
 // 前端类型 — 排盘相关类型直接复用 @najia/core，此处只定义前端特有类型
-import type { HexagramResult, YaoParam, Gender } from '@najia/core'
+import type { HexagramResult, YaoParam, Gender, YaoRelation } from '@najia/core'
 
-export type { HexagramResult, YaoParam, Gender }
+export type { HexagramResult, YaoParam, Gender, YaoRelation }
 
 // AI 智能解读请求（走后端 /interpret）
 export interface InterpretRequest {
@@ -26,6 +26,18 @@ export interface InterpretRequest {
     hide_qin6?: string[]
     hide_qinx?: string[]
     hide_seat?: number[]
+    // 卦爻动变关系（反吟/伏吟/进退神），core 已算好直接透传
+    yao_relation?: YaoRelation | null
+    // 用神标记（问题→用神六亲→爻位），前端算好传后端
+    yongshen?: {
+      category: string
+      yongshen: string
+      positions: number[]
+      multiple: boolean
+      hidden: boolean
+      hidden_seat: number[]
+      note: string
+    }
   }
   question: string
 }

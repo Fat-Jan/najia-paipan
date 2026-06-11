@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { markYongShen } from '@najia/core'
 import { interpret } from '@/api/interpret'
 import type { HexagramResult, InterpretResponse } from '@/types'
 
@@ -139,6 +140,9 @@ async function handleInterpret() {
         hide_qin6: r.hide?.qin6,
         hide_qinx: r.hide?.qinx,
         hide_seat: r.hide?.seat,
+        // 卦爻动变关系（core 已算好）+ 用神标记（按问题推断）
+        yao_relation: r.yao_relation,
+        yongshen: markYongShen(r, question.value),
       },
       question: question.value,
     })

@@ -6,6 +6,7 @@ import {
   setShiYao, palace, getNajia, getGod6, getType,
   calcHidden, calcTransform, gz5x, getQin6,
 } from './hexagram.js'
+import { calcYaoRelation } from './relation.js'
 import {
   getDaily, dateToYueRiChen, calcYueLing, isYuePo, isXunKong,
 } from './time-analysis.js'
@@ -120,6 +121,11 @@ export function compile(input: PaipanInput): HexagramResult {
   if (bian !== null) result.bian = bian
   if (hide !== null) result.hide = hide
   // 卦辞暂未移植（TODO：从 data/guaci.json 加载）
+
+  // 卦爻动变关系（反吟/伏吟/进退神）：仅有变卦时计算，纯卦象固有属性
+  if (bian !== null) {
+    result.yao_relation = calcYaoRelation(mark, dong, bian.mark)
+  }
 
   // 与 Python to_dict 一致：时间维度字段仅在非空时附加
   if (yueLing !== null) result.yue_ling = yueLing
