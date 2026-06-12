@@ -86,43 +86,43 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { markYongShen, calcYingQi } from '@najia/core'
-import { interpret } from '@/api/interpret'
-import type { HexagramResult, InterpretResponse } from '@/types'
+import { computed, ref } from 'vue';
+import { markYongShen, calcYingQi } from '@najia/core';
+import { interpret } from '@/api/interpret';
+import type { HexagramResult, InterpretResponse } from '@/types';
 
 const props = defineProps<{
-  show: boolean
-  hexagramResult: HexagramResult | null
-}>()
+  show: boolean;
+  hexagramResult: HexagramResult | null;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:show', value: boolean): void
-}>()
+  (e: 'update:show', value: boolean): void;
+}>();
 
 const showModal = computed({
   get: () => props.show,
   set: (value) => emit('update:show', value),
-})
+});
 
-const question = ref('')
-const interpretResult = ref<InterpretResponse | null>(null)
-const loading = ref(false)
-const error = ref('')
+const question = ref('');
+const interpretResult = ref<InterpretResponse | null>(null);
+const loading = ref(false);
+const error = ref('');
 
 // 调真实 AI 解读 API（替代旧版的假模拟数据）
 async function handleInterpret() {
-  const r = props.hexagramResult
-  if (!r || !question.value.trim()) return
+  const r = props.hexagramResult;
+  if (!r || !question.value.trim()) return;
 
-  loading.value = true
-  error.value = ''
-  interpretResult.value = null
+  loading.value = true;
+  error.value = '';
+  interpretResult.value = null;
   try {
     // 先算一次用神，供 yongshen 与 ying_qi 共用（避免重复计算）
-    const ys = markYongShen(r, question.value)
-    const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false
-    const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null
+    const ys = markYongShen(r, question.value);
+    const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false;
+    const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null;
     interpretResult.value = await interpret({
       hexagram_data: {
         name: r.name,
@@ -151,23 +151,24 @@ async function handleInterpret() {
         yao_relation: r.yao_relation,
         gua_shen: r.gua_shen,
         day_dynamics: r.day_dynamics,
+        san_he: r.san_he,
         ying_qi: yingQi,
         yongshen: ys,
       },
       question: question.value,
-    })
+    });
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'AI 解读失败'
+    error.value = err instanceof Error ? err.message : 'AI 解读失败';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
 function handleCancel() {
-  showModal.value = false
-  question.value = ''
-  interpretResult.value = null
-  error.value = ''
+  showModal.value = false;
+  question.value = '';
+  interpretResult.value = null;
+  error.value = '';
 }
 </script>
 
@@ -214,12 +215,30 @@ function handleCancel() {
   font-weight: 500;
 }
 
-.jixiong-大吉 { background: #efe; color: #3c3; }
-.jixiong-中吉 { background: #ffe; color: #cc3; }
-.jixiong-小吉 { background: #eef; color: #33c; }
-.jixiong-平 { background: #eee; color: #666; }
-.jixiong-小凶 { background: #fee; color: #c33; }
-.jixiong-大凶 { background: #fcc; color: #c00; }
+.jixiong-大吉 {
+  background: #efe;
+  color: #3c3;
+}
+.jixiong-中吉 {
+  background: #ffe;
+  color: #cc3;
+}
+.jixiong-小吉 {
+  background: #eef;
+  color: #33c;
+}
+.jixiong-平 {
+  background: #eee;
+  color: #666;
+}
+.jixiong-小凶 {
+  background: #fee;
+  color: #c33;
+}
+.jixiong-大凶 {
+  background: #fcc;
+  color: #c00;
+}
 
 .rule-analysis {
   margin-bottom: 1.5rem;

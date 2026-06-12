@@ -1,24 +1,58 @@
 // 解读效果测试集 — 用 @najia/core 排盘，调真实 LongCat 看解读质量。
 // 跑法：node --env-file=apps/server/.env apps/server/test/interpret-samples.mjs
 // 注意：会真实消耗 LongCat 额度。
-import { compile, markYongShen, calcYingQi } from '../../../packages/core/dist/index.js'
-import { runRuleEngine } from '../dist/rule-engine.js'
-import { interpretHexagram } from '../dist/ai-client.js'
+import { compile, markYongShen, calcYingQi } from '../../../packages/core/dist/index.js';
+import { runRuleEngine } from '../dist/rule-engine.js';
+import { interpretHexagram } from '../dist/ai-client.js';
 
 // 典型测试卦例：覆盖不同问题类型 + 卦象形态（静卦/动爻/变卦/六冲六合）
 const CASES = [
-  { question: '问今年事业能否升职', params: [2, 2, 1, 2, 4, 2], date: '2026-03-15 10:00', gender: '男' },
-  { question: '问与现任感情能否长久', params: [1, 1, 1, 1, 1, 1], date: '2026-06-01 20:30', gender: '女' },
-  { question: '问近期投资一笔生意是否可行', params: [3, 2, 2, 1, 1, 4], date: '2026-02-20 14:00', gender: '男' },
-  { question: '问搬家后家人健康', params: [2, 1, 2, 1, 2, 1], date: '2026-09-09 08:00', gender: '女' },
+  {
+    question: '问今年事业能否升职',
+    params: [2, 2, 1, 2, 4, 2],
+    date: '2026-03-15 10:00',
+    gender: '男',
+  },
+  {
+    question: '问与现任感情能否长久',
+    params: [1, 1, 1, 1, 1, 1],
+    date: '2026-06-01 20:30',
+    gender: '女',
+  },
+  {
+    question: '问近期投资一笔生意是否可行',
+    params: [3, 2, 2, 1, 1, 4],
+    date: '2026-02-20 14:00',
+    gender: '男',
+  },
+  {
+    // 三合局验证：火天大有，半合水(子辰)含中神 + 半合金(巳酉)含中神
+    question: '问今年能否换到更好的工作',
+    params: [1, 1, 1, 1, 2, 1],
+    date: '2026-04-10 09:00',
+    gender: '男',
+  },
+  {
+    // 三合局验证：火山旅，半合水(申辰)拱合无中神 + 半合金(巳酉)含中神
+    question: '问这次合伙做生意能否赚钱',
+    params: [2, 2, 1, 1, 2, 1],
+    date: '2026-05-22 15:30',
+    gender: '女',
+  },
+  {
+    question: '问搬家后家人健康',
+    params: [2, 1, 2, 1, 2, 1],
+    date: '2026-09-09 08:00',
+    gender: '女',
+  },
   { question: '', params: [4, 4, 4, 1, 1, 1], date: '2026-12-01 23:00', gender: '男' }, // 空问题 + 23点边界
-]
+];
 
 function toHexagramData(r, question) {
   // 先算一次用神，供 yongshen 与 ying_qi 共用（与 InterpretDialog 逻辑一致）
-  const ys = markYongShen(r, question)
-  const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false
-  const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null
+  const ys = markYongShen(r, question);
+  const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false;
+  const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null;
   return {
     name: r.name,
     gong: r.gong,
@@ -44,33 +78,41 @@ function toHexagramData(r, question) {
     gua_shen: r.gua_shen,
     day_dynamics: r.day_dynamics,
     ying_qi: yingQi,
+    san_he: r.san_he,
     yongshen: ys,
-  }
+  };
 }
 
 for (const [i, c] of CASES.entries()) {
-  const r = compile({ params: c.params, date: c.date, gender: c.gender })
-  const data = toHexagramData(r, c.question)
-  const rule = runRuleEngine(data)
-  console.log('\n' + '='.repeat(70))
-  console.log(`【案例 ${i + 1}】问题：${c.question || '(未指定)'}`)
-  console.log(`卦象：${r.name}（${r.gong}宫）${r.hexagram_type} mark=${r.mark}`)
-  console.log(`世应：世${r.shiy[0]}应${r.shiy[1]} | 动爻：${r.dong.length ? r.dong.map((x) => x + 1).join('、') : '无'} | 变卦：${r.bian?.name ?? '无'}`)
+  const r = compile({ params: c.params, date: c.date, gender: c.gender });
+  const data = toHexagramData(r, c.question);
+  const rule = runRuleEngine(data);
+  console.log('\n' + '='.repeat(70));
+  console.log(`【案例 ${i + 1}】问题：${c.question || '(未指定)'}`);
+  console.log(`卦象：${r.name}（${r.gong}宫）${r.hexagram_type} mark=${r.mark}`);
+  console.log(
+    `世应：世${r.shiy[0]}应${r.shiy[1]} | 动爻：${r.dong.length ? r.dong.map((x) => x + 1).join('、') : '无'} | 变卦：${r.bian?.name ?? '无'}`,
+  );
   // 诊断：确认新数据已生成（验证 AI 是否采用看下方解读文本）
-  console.log(`用神标记：${data.yongshen.note}`)
+  console.log(`用神标记：${data.yongshen.note}`);
+  if (r.san_he?.matches.length) {
+    // 三合局明细：核对 AI 是否引用 core 算定的成局结构
+    console.log(`三合局：${r.san_he.matches.map((m) => `${m.type}化${m.wuxing}(${m.zhis.join('')})`).join(' | ')}`);
+  }
   if (r.yao_relation?.changes.length) {
     // 逐动爻明细：核对 AI 是否照此采用、不再自行心算进退神
     const lines = r.yao_relation.changes.map(
-      (c) => `第${c.pos}爻 ${c.ben_zhi}→${c.bian_zhi} ${c.relation}${c.fanyin ? '+反吟' : ''}${c.fuyin ? '+伏吟' : ''}`,
-    )
-    console.log(`动变关系：${lines.join(' | ')}`)
+      (c) =>
+        `第${c.pos}爻 ${c.ben_zhi}→${c.bian_zhi} ${c.relation}${c.fanyin ? '+反吟' : ''}${c.fuyin ? '+伏吟' : ''}`,
+    );
+    console.log(`动变关系：${lines.join(' | ')}`);
   }
-  console.log(`规则引擎吉凶：${rule.jixiong}`)
-  console.log('-'.repeat(70))
+  console.log(`规则引擎吉凶：${rule.jixiong}`);
+  console.log('-'.repeat(70));
   try {
-    const text = await interpretHexagram(data, c.question)
-    console.log(text)
+    const text = await interpretHexagram(data, c.question);
+    console.log(text);
   } catch (err) {
-    console.log('❌ 解读失败:', err.message)
+    console.log('❌ 解读失败:', err.message);
   }
 }
