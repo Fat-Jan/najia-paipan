@@ -1,7 +1,37 @@
 // 用神取用 — 把「占问类别 → 用神六亲 → 所在爻位」确定化。
 // AI 最易错的是「定位」(在哪几爻、是否伏藏)，不是推理；故把定位做成结构化数据。
 // 类别判定优先用显式 category，无则按关键词兜底推断。
-import type { HexagramResult, QuestionCategory, YongShenInfo } from './types.js'
+import type { HexagramResult, QuestionCategory, YongShenInfo, ShenRole } from './types.js'
+
+/**
+ * 六亲相生环（唯一数据源）— 按五行相生顺序排列：
+ * 兄弟→子孙→妻财→官鬼→父母→(回)兄弟，对应五行相生（如金生水生木生火生土生金）。
+ * 推导依据：兄弟=同我、子孙=我生、妻财=我克、官鬼=克我、父母=生我，
+ * 这五者在五行相生环上的相对位置恒定，与用神具体五行无关。
+ *
+ * 原/忌/仇神全部从此环的索引偏移推导，不另立手写映射表：
+ * - 原神=生用神者=环上前 1 位
+ * - 忌神=克用神者=环上前 2 位（相克 = 相生环上隔一位）
+ * - 仇神=生忌神者=环上前 3 位（即忌神的前 1 位）
+ */
+const QIN_RING = ['兄弟', '子孙', '妻财', '官鬼', '父母'] as const
+
+/** 取相生环上相对用神偏移 offset 位的六亲（offset 为负表示「前几位」） */
+function ringQin(yongshen: string, offset: number): string {
+  const i = QIN_RING.indexOf(yongshen as (typeof QIN_RING)[number])
+  if (i < 0) return ''
+  return QIN_RING[(i + offset + QIN_RING.length * 3) % QIN_RING.length]
+}
+
+/** 在主卦 qin6 中找某六亲的爻位（1-based），可多现 */
+function findPositions(qin6: string[], qin: string): number[] {
+  return qin6.map((q, i) => (q === qin ? i + 1 : -1)).filter((p) => p > 0)
+}
+
+/** 构造原/忌/仇神角色（六亲名 + 卦中位置） */
+function buildRole(qin6: string[], qin: string): ShenRole {
+  return { qin, positions: findPositions(qin6, qin) }
+}
 
 /** 类别 → 用神六亲。'一般' 无固定用神，兼看世爻 */
 const YONGSHEN_MAP: Record<QuestionCategory, string> = {
@@ -56,6 +86,7 @@ export function markYongShen(
   // '一般' 无固定用神，兼看世爻
   if (!yongshen) {
     const shi = result.shiy?.[0]
+    const emptyRole: ShenRole = { qin: '', positions: [] }
     return {
       category: cat,
       yongshen: '',
@@ -63,6 +94,9 @@ export function markYongShen(
       multiple: false,
       hidden: false,
       hidden_seat: [],
+      yuanshen: emptyRole,
+      jishen: emptyRole,
+      choushen: emptyRole,
       note: shi ? `无固定用神，以世爻（第${shi}爻）为主体参看。` : '无固定用神，兼看世爻。',
     }
   }
@@ -89,6 +123,12 @@ export function markYongShen(
     }
   }
 
+  // 原/忌/仇神：从相生环索引偏移推导（唯一数据源 QIN_RING）
+  const qin6 = result.qin6 ?? []
+  const yuanshen = buildRole(qin6, ringQin(yongshen, -1)) // 生用神者
+  const jishen = buildRole(qin6, ringQin(yongshen, -2)) // 克用神者（环上前 2 位）
+  const choushen = buildRole(qin6, ringQin(yongshen, -3)) // 生忌神者
+
   let note: string
   if (hidden) {
     note = `${cat}以「${yongshen}」为用神，主卦不上卦，伏于第${hiddenSeat.join('、')}爻之下，需待引拔（值日月或动爻冲飞神）方显力。`
@@ -107,6 +147,9 @@ export function markYongShen(
     multiple,
     hidden,
     hidden_seat: hiddenSeat,
+    yuanshen,
+    jishen,
+    choushen,
     note,
   }
 }

@@ -131,6 +131,9 @@ async function handleInterpret() {
         yue_ling: r.yue_ling ?? undefined,
         yue_zhi: r.yue_zhi ?? undefined,
         ri_chen: r.ri_chen ?? undefined,
+        // 旬空/月破：逐爻布尔，core 已算好，避免 AI 自行推旬空出错
+        xun_kong: r.xun_kong ?? undefined,
+        yue_po: r.yue_po ?? undefined,
         dong: r.dong,
         bian_name: r.bian?.name,
         hide_name: r.hide?.name,
@@ -142,6 +145,7 @@ async function handleInterpret() {
         hide_seat: r.hide?.seat,
         // 卦爻动变关系（core 已算好）+ 用神标记（按问题推断）
         yao_relation: r.yao_relation,
+        gua_shen: r.gua_shen,
         yongshen: markYongShen(r, question.value),
       },
       question: question.value,

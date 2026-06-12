@@ -207,3 +207,82 @@ describe('用神取用 — 标记定位', () => {
     expect(ys.note).toContain('伏')
   })
 })
+
+describe('用神取用 — 原忌仇神（六亲生克环推导）', () => {
+  // 构造一个六亲齐全的主卦，验证各用神的原/忌/仇神六亲名 + 卦中定位
+  // qin6 顺序与五行无关，原忌仇只看六亲名：生用神=原神、克用神=忌神、生忌神=仇神
+  function fakeResult(qin6: string[]): HexagramResult {
+    return {
+      params: [1, 1, 1, 1, 1, 1],
+      mark: '111111',
+      name: 'X',
+      gong: '乾',
+      shiy: [6, 3, 0],
+      qin6,
+      qinx: [],
+      god6: [],
+      dong: [],
+      solar: '',
+      lunar: { xkong: '', gz: { year: '', month: '', day: '', hour: '' } },
+      hexagram_type: '',
+    }
+  }
+
+  it('用神妻财 → 原神子孙 / 忌神兄弟 / 仇神父母', () => {
+    const r = fakeResult(['妻财', '子孙', '兄弟', '父母', '官鬼', '妻财'])
+    const ys = markYongShen(r, '问求财')
+    expect(ys.yongshen).toBe('妻财')
+    expect(ys.yuanshen.qin).toBe('子孙')
+    expect(ys.jishen.qin).toBe('兄弟')
+    expect(ys.choushen.qin).toBe('父母')
+    // 卦中定位：妻财在第 1、6 爻
+    expect(ys.yuanshen.positions).toEqual([2]) // 子孙在第 2 爻
+    expect(ys.jishen.positions).toEqual([3]) // 兄弟在第 3 爻
+    expect(ys.choushen.positions).toEqual([4]) // 父母在第 4 爻
+  })
+
+  it('用神官鬼 → 原神妻财 / 忌神子孙 / 仇神兄弟', () => {
+    const r = fakeResult(['官鬼', '妻财', '子孙', '兄弟', '父母', '官鬼'])
+    const ys = markYongShen(r, '问事业')
+    expect(ys.yongshen).toBe('官鬼')
+    expect(ys.yuanshen.qin).toBe('妻财')
+    expect(ys.jishen.qin).toBe('子孙')
+    expect(ys.choushen.qin).toBe('兄弟')
+  })
+
+  it('用神子孙 → 原神兄弟 / 忌神父母 / 仇神官鬼', () => {
+    const r = fakeResult(['子孙', '兄弟', '父母', '官鬼', '妻财', '子孙'])
+    const ys = markYongShen(r, '问健康')
+    expect(ys.yongshen).toBe('子孙')
+    expect(ys.yuanshen.qin).toBe('兄弟')
+    expect(ys.jishen.qin).toBe('父母')
+    expect(ys.choushen.qin).toBe('官鬼')
+  })
+
+  it('用神父母 → 原神官鬼 / 忌神妻财 / 仇神子孙', () => {
+    const r = fakeResult(['父母', '官鬼', '妻财', '子孙', '兄弟', '父母'])
+    const ys = markYongShen(r, '问文书合同')
+    expect(ys.yongshen).toBe('父母')
+    expect(ys.yuanshen.qin).toBe('官鬼')
+    expect(ys.jishen.qin).toBe('妻财')
+    expect(ys.choushen.qin).toBe('子孙')
+  })
+
+  it('原忌仇神不上卦 → positions 为空数组', () => {
+    // 主卦只有妻财，无子孙/兄弟/父母
+    const r = fakeResult(['妻财', '妻财', '官鬼', '官鬼', '妻财', '官鬼'])
+    const ys = markYongShen(r, '问求财')
+    expect(ys.yuanshen.qin).toBe('子孙')
+    expect(ys.yuanshen.positions).toEqual([])
+    expect(ys.jishen.positions).toEqual([])
+  })
+
+  it('一般类无用神 → 原忌仇神 qin 为空串', () => {
+    const r = fakeResult(['兄弟', '子孙', '妻财', '官鬼', '父母', '兄弟'])
+    const ys = markYongShen(r, '随便问问')
+    expect(ys.yongshen).toBe('')
+    expect(ys.yuanshen.qin).toBe('')
+    expect(ys.jishen.qin).toBe('')
+    expect(ys.choushen.qin).toBe('')
+  })
+})

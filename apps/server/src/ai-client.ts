@@ -10,20 +10,24 @@ const SYSTEM_PROMPT = `你是一名六爻纳甲解读分析师，熟悉六亲生
 - 先给结论，再讲依据；术语点到为止，重点说它对用户问题意味着什么
 - 不灌鸡汤、不空泛安慰；该说不利就说不利，同时说明可调整的空间
 
-【断卦方法论框架】按以下流程逐步推理：
-1. 用神取用：依所问之事定用神
-   - 财运/求财 → 妻财；事业/官职/功名/女问婚（夫星）→ 官鬼
-   - 子女/晋升喜讯/平安/医药 → 子孙；文书/合同/房产/学业/长辈/男问婚（妻星看妻财）→ 父母
-   - 兄弟/朋友/竞争/合伙 → 兄弟；问自身则兼看世爻
-2. 用神旺衰：逐项核对——月令（旺相休囚死）、日辰（生扶或克泄）、是否旬空、是否月破。综合定用神强弱
-3. 原神/忌神/仇神：生用神者为原神（助），克用神者为忌神（阻），生忌神者为仇神。看它们各自旺衰与动静
-4. 世应与动变：世为求测者、应为对方/事体，看生克距离；动爻主变化，变爻回头生/克用神决定走势；旬空月破之爻力量打折
-5. 综合权衡：上述信号常相互矛盾（如用神旺却旬空、动而化回头克），需判断当前哪个因素主导，给出倾向性结论，不要简单罗列
-6. 应期：依逢值、逢冲、逢合、出空等推估可能的时间节点
+【数据已算定，直接采用，勿自行推算】
+下方卦象数据中，以下要素已由排盘程序按古法算定，你必须直接采用，不得自行重新推导（自行心算这些最易出错）：
+- 用神取用（所问之事对应的六亲及其爻位）
+- 原神/忌神/仇神（按六亲生克算定的助/阻/间接为害之神及其爻位）
+- 各爻旬空/月破状态（已逐爻标注）
+- 动爻的变爻配置及本→变关系（进退神/回头生克等，逐爻标注）
+- 卦身
+
+【断卦方法论框架】在已算定数据基础上做综合推理：
+1. 用神旺衰：依据已标注的月令旺衰（旺相休囚死）、日辰生克、旬空、月破，综合定用神强弱（数据已给，只需综合，勿自行推旬空/月破）
+2. 原忌仇神动态：原神助用神、忌神阻用神、仇神助忌神为害。结合各自已标注的旺衰与动静，判断助力/阻力的实际强弱
+3. 世应与动变：世为求测者、应为对方/事体，看生克距离；动爻变爻关系已算定，据此判走势；旬空月破之爻力量打折
+4. 综合权衡：上述信号常相互矛盾（如用神旺却旬空、动而化回头克），需判断当前哪个因素主导，给出倾向性结论，不要简单罗列
+5. 应期：依逢值、逢冲、逢合、出空等推估可能的时间节点
 
 【重要约束】
 - 只依据下方给出的卦象数据推理，不要臆造爻的干支、六亲或变爻配置；数据未提供的不要编造
-- 变卦逐爻数据若已给出，动爻的变爻以该数据为准，不可自行推演
+- 用神、原忌仇神、旬空、月破、变爻关系、卦身均已算定，直接采用，切勿自行重算或推翻
 
 【边界】
 - 结论是基于卦象的概率性判断，不是确定的预言；明确这是参考，决定权在用户
@@ -63,13 +67,25 @@ function buildUserPrompt(info: HexagramData, question: string): string {
     hideSection = `\n伏神：${info.hide_name}`
   }
 
-  // 用神标记：把「问题→用神六亲→爻位」确定化，AI 直接采用不必自行定位
+  // 用神标记：把「问题→用神六亲→爻位 + 原忌仇神」确定化，AI 直接采用不必自行定位/推导
   let yongshenSection = ''
   if (info.yongshen) {
     const y = info.yongshen
     if (y.yongshen) {
       const posStr = y.positions.length > 0 ? `第${y.positions.join('、')}爻` : '主卦不上卦'
-      yongshenSection = `\n【用神取用（已据问题判定，直接采用）】\n类别：${y.category}　用神六亲：${y.yongshen}　位置：${posStr}${y.hidden ? `（伏于第${y.hidden_seat.join('、')}爻下）` : ''}\n${y.note}`
+      // 原忌仇神：core 按六亲生克环算定（生用神=原神/克用神=忌神/生忌神=仇神），AI 勿自行推导
+      const roleLine = (label: string, r?: { qin: string; positions: number[] }): string => {
+        if (!r || !r.qin) return ''
+        const where = r.positions.length > 0 ? `第${r.positions.join('、')}爻` : '不上卦'
+        return `${label}${r.qin}（${where}）`
+      }
+      const roles = [
+        roleLine('原神=', y.yuanshen),
+        roleLine('忌神=', y.jishen),
+        roleLine('仇神=', y.choushen),
+      ].filter(Boolean).join('　')
+      const roleSection = roles ? `\n原忌仇神（已算定，勿自行推导）：${roles}` : ''
+      yongshenSection = `\n【用神取用（已据问题判定，直接采用）】\n类别：${y.category}　用神六亲：${y.yongshen}　位置：${posStr}${y.hidden ? `（伏于第${y.hidden_seat.join('、')}爻下）` : ''}\n${y.note}${roleSection}`
     } else {
       yongshenSection = `\n【用神取用】\n${y.note}`
     }
@@ -84,17 +100,28 @@ function buildUserPrompt(info: HexagramData, question: string): string {
     relationSection = `\n【动变关系（逐动爻已算定，须直接采用，勿自行推断进退神或生克）】\n${lines.join('\n')}`
   }
 
-  // 主卦逐爻一览：六亲+纳甲+六神对齐，便于 AI 定位用神与各爻关系
+  // 卦身（月卦身）：core 算好的事体定向信号，AI 参看（流派有争议，不强制主导）
+  let guaShenSection = ''
+  if (info.gua_shen) {
+    guaShenSection = `\n【卦身（已算定，参看事体定向，勿自行起卦身）】\n  ${info.gua_shen.note}`
+  }
+
+  // 主卦逐爻一览：六亲+纳甲+六神+月令旺衰+旬空/月破，便于 AI 定位用神与各爻状态。
+  // 旬空/月破由 core 算定（AI 自行推旬空最易错），直接标注、不让 AI 心算。
   const yaoLines = (info.qin6 ?? []).map((q, i) => {
     const x = info.qinx?.[i] ?? ''
     const g = info.god6?.[i] ?? ''
     const yl = info.yue_ling?.[i] ?? ''
+    const states: string[] = []
+    if (info.xun_kong?.[i]) states.push('旬空')
+    if (info.yue_po?.[i]) states.push('月破')
+    const stateStr = states.length > 0 ? ` ${states.join('、')}` : ''
     const flags: string[] = []
     if (shi === i + 1) flags.push('世')
     if (ying === i + 1) flags.push('应')
     if (dong.includes(i)) flags.push('动')
     const flagStr = flags.length > 0 ? `【${flags.join('')}】` : ''
-    return `  第${i + 1}爻：${q}${x} ${g}${yl ? ` 月令${yl}` : ''}${flagStr}`
+    return `  第${i + 1}爻：${q}${x} ${g}${yl ? ` 月令${yl}` : ''}${stateStr}${flagStr}`
   })
 
   return `【用户问题】
@@ -112,11 +139,11 @@ ${yaoLines.join('\n')}
 月建：${info.yue_zhi ?? '未知'}　日辰：${info.ri_chen ?? '未知'}　动爻：${dongStr}
 
 【变卦信息】
-${bianSection}${hideSection}${relationSection}
+${bianSection}${hideSection}${relationSection}${guaShenSection}
 
 【解读要求】
-1. 先明确"${userQuestion}"对应的用神是哪个六亲，并指出它在第几爻
-2. 按方法论框架逐步推理：用神旺衰 → 原神/忌神 → 世应动变 → 综合权衡
+1. 用神、原忌仇神、旬空月破、动变关系、卦身均已在上方算定，直接采用，不要自行重新推导或心算
+2. 按方法论框架综合权衡：用神旺衰（据月令/日辰/旬空/月破）→ 原神忌神动静 → 世应动变 → 给倾向性结论
 3. 按以下结构输出：
    - 结论：直接给出对这个问题的判断（有利/不利/需观望，及大致程度）
    - 依据：说明卦象上是怎么得出的（用神旺衰、世应生克、动变走势）

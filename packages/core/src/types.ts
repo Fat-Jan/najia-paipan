@@ -79,7 +79,15 @@ export type QuestionCategory =
   | '求财' | '事业' | '婚恋' | '健康' | '官非'
   | '学业' | '文书' | '出行' | '寻人' | '一般'
 
-/** 用神标记信息 — 把「问题→用神六亲→所在爻位」确定化，减少 AI 定位出错 */
+/** 一个六亲角色（原神/忌神/仇神）的六亲名与卦中位置 */
+export interface ShenRole {
+  /** 六亲名（如「子孙」） */
+  qin: string
+  /** 在主卦的爻位（1-based），不上卦为空数组 */
+  positions: number[]
+}
+
+/** 用神标记信息 — 把「问题→用神六亲→所在爻位 + 原忌仇神」确定化，减少 AI 心算出错 */
 export interface YongShenInfo {
   /** 占问类别 */
   category: QuestionCategory
@@ -93,6 +101,26 @@ export interface YongShenInfo {
   hidden: boolean
   /** 伏藏所在爻位（1-based），仅 hidden 时有值 */
   hidden_seat: number[]
+  /** 原神（生用神者，助）；无用神时 qin 为空串 */
+  yuanshen: ShenRole
+  /** 忌神（克用神者，阻） */
+  jishen: ShenRole
+  /** 仇神（生忌神者，间接为害） */
+  choushen: ShenRole
+  /** 一句话说明 */
+  note: string
+}
+
+/** 卦身（月卦身）— 阳世起子/阴世起午顺数到世位，定卦身地支，看临何爻 */
+export interface GuaShenInfo {
+  /** 卦身地支（如「午」） */
+  zhi: string
+  /** 世爻是否为阳爻（决定起子还是起午） */
+  yang_shi: boolean
+  /** 卦身临爻位（1-based）；不上卦时为空数组 */
+  positions: number[]
+  /** 是否上卦（卦身地支现于主卦六爻） */
+  shang_gua: boolean
   /** 一句话说明 */
   note: string
 }
@@ -148,6 +176,8 @@ export interface HexagramResult {
   hide?: HiddenHexagram | null
   /** 卦爻动变关系（反吟/伏吟/进退神）；仅有变卦时附加 */
   yao_relation?: YaoRelation | null
+  /** 卦身（月卦身）；恒附加（任何卦都有世爻可起卦身） */
+  gua_shen?: GuaShenInfo | null
   // 时间维度断卦属性
   yue_ling?: YueLing[] | null
   yue_po?: boolean[] | null

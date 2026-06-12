@@ -22,6 +22,8 @@ function normalize(obj: Record<string, unknown>): Record<string, unknown> {
   // yao_relation 是 TS 新增的卦象固有属性，Python 黄金数据无此字段。
   // 对拍只验「与 Python 一致」的部分；新字段由 relation.test.ts 独立验证正确性。
   delete o.yao_relation
+  // gua_shen 同理：TS 新增卦身字段，Python 黄金数据无，剥离后再比对
+  delete o.gua_shen
   return o
 }
 

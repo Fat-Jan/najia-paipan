@@ -1,7 +1,7 @@
 // 前端类型 — 排盘相关类型直接复用 @najia/core，此处只定义前端特有类型
-import type { HexagramResult, YaoParam, Gender, YaoRelation } from '@najia/core'
+import type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo } from '@najia/core'
 
-export type { HexagramResult, YaoParam, Gender, YaoRelation }
+export type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo }
 
 // AI 智能解读请求（走后端 /interpret）
 export interface InterpretRequest {
@@ -16,6 +16,9 @@ export interface InterpretRequest {
     yue_ling?: string[]
     yue_zhi?: string
     ri_chen?: string
+    // 旬空/月破：逐爻布尔（core 算好透传，AI 不必自行推旬空）
+    xun_kong?: boolean[]
+    yue_po?: boolean[]
     dong: number[]
     bian_name?: string
     hide_name?: string
@@ -28,7 +31,9 @@ export interface InterpretRequest {
     hide_seat?: number[]
     // 卦爻动变关系（反吟/伏吟/进退神），core 已算好直接透传
     yao_relation?: YaoRelation | null
-    // 用神标记（问题→用神六亲→爻位），前端算好传后端
+    // 卦身（月卦身），core 已算好直接透传
+    gua_shen?: GuaShenInfo | null
+    // 用神标记（问题→用神六亲→爻位 + 原忌仇神），前端算好传后端
     yongshen?: {
       category: string
       yongshen: string
@@ -36,6 +41,9 @@ export interface InterpretRequest {
       multiple: boolean
       hidden: boolean
       hidden_seat: number[]
+      yuanshen: { qin: string; positions: number[] }
+      jishen: { qin: string; positions: number[] }
+      choushen: { qin: string; positions: number[] }
       note: string
     }
   }
