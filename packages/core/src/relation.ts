@@ -1,17 +1,9 @@
 // 卦爻动变关系 — 反吟/伏吟/进神/退神 + 逐动爻本→变五行生克，纯确定性配置识别。
 // 只比对动爻的「本支 ↔ 变支」地支关系，不做吉凶权衡（那是 AI 的活）。
 // 定位：把 AI 看不出、且一遇空白就瞎编的「卦级信号」全算成结构化数据喂进 prompt。
-import { ZHIS_DICT, ZHI5 } from './const.js'
+import { ZHIS_DICT, ZHI5, isChong } from './const.js'
 import { getNajia } from './hexagram.js'
 import type { YaoRelation, YaoChange, YaoChangeRelation } from './types.js'
-
-/** 地支相冲：六冲对索引差恒为 6（子0午6、丑1未7…巳5亥11） */
-function isChong(z1: string, z2: string): boolean {
-  const i = ZHIS_DICT[z1]
-  const j = ZHIS_DICT[z2]
-  if (i === undefined || j === undefined) return false
-  return Math.abs(i - j) === 6
-}
 
 /** 地支 → 五行索引（0木 1火 2土 3金 4水） */
 function zhiWuxing(z: string): number | null {

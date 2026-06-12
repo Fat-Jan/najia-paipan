@@ -74,6 +74,26 @@ export const GANS_DICT: Record<string, number> = Object.fromEntries(GANS.map((c,
 export const ZHIS_DICT: Record<string, number> = Object.fromEntries(ZHIS.map((c, i) => [c, i]))
 export const YAOS_DICT: Record<string, number> = Object.fromEntries(YAOS.map((t, i) => [t, i]))
 
+/**
+ * 地支相冲（六冲）：索引差恒为 6（子0午6、丑1未7…巳5亥11）。
+ * 唯一数据源——月破、暗动/日破、应期逢冲全部复用，不再各自维护冲表。
+ */
+export function isChong(z1: string, z2: string): boolean {
+  const i = ZHIS_DICT[z1]
+  const j = ZHIS_DICT[z2]
+  if (i === undefined || j === undefined) return false
+  return Math.abs(i - j) === 6
+}
+
+/**
+ * 地支六合表：子丑/寅亥/卯戌/辰酉/巳申/午未。
+ * 六合无统一数学规律（子丑索引和=1，其余=13），必须显式表。
+ */
+export const LIUHE_MAP: Record<string, string> = {
+  子: '丑', 丑: '子', 寅: '亥', 亥: '寅', 卯: '戌', 戌: '卯',
+  辰: '酉', 酉: '辰', 巳: '申', 申: '巳', 午: '未', 未: '午',
+}
+
 // 六亲矩阵（5×5）；索引：0=木 1=火 2=土 3=金 4=水
 export const QIN6_MATRIX: string[][] = [
   ['兄弟', '子孙', '妻财', '官鬼', '父母'], // 木

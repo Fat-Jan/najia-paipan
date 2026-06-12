@@ -1,18 +1,12 @@
 // 时间维度断卦 — 从 legacy/najia/najia/{time_analysis,lunar_utils}.py 移植
 // 农历/干支底层用 tyme4ts（6tail TS 原生版）
 import { SolarDay, SolarTime } from 'tyme4ts'
-import { ZHIS, ZHI5, XING5, GANS } from './const.js'
+import { ZHIS, ZHI5, XING5, GANS, isChong, LIUHE_MAP } from './const.js'
 
 // 地支→五行字（由 const.ZHI5 + XING5 派生，对齐 time_analysis.DIZHI_WUXING）
 const DIZHI_WUXING: Record<string, string> = Object.fromEntries(
   ZHIS.map((zhi, idx) => [zhi, XING5[ZHI5[idx]]]),
 )
-
-// 冲关系（月破）
-const CHONG_MAP: Record<string, string> = {
-  子: '午', 丑: '未', 寅: '申', 卯: '酉', 辰: '戌', 巳: '亥',
-  午: '子', 未: '丑', 申: '寅', 酉: '卯', 戌: '辰', 亥: '巳',
-}
 
 // 五行生克
 const SHENG_CYCLE = new Set(['金水', '水木', '木火', '火土', '土金'])
@@ -31,7 +25,7 @@ export function calcYueLing(yaoWuxing: string, yueZhi: string): string {
 
 /** 月破：爻地支与月建相冲 */
 export function isYuePo(yaoDizhi: string, yueZhi: string): boolean {
-  return CHONG_MAP[yaoDizhi] === yueZhi
+  return isChong(yaoDizhi, yueZhi)
 }
 
 /** 旬空：返回该日辰所在旬空亡的两个地支（time_analysis.get_xun_kong） */
