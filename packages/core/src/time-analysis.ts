@@ -106,7 +106,8 @@ export function calcDayDynamics(
   const hits: string[] = []
   const states = qinx.map((gz, i) => {
     if (dong.includes(i)) return '' // 动爻跳过
-    const yaoZhi = gz.slice(-1)
+    // qinx 是 gz5x 产物「干支+五行」三字（如「甲子水」），地支在 index 1，不能取末字（末字是五行）
+    const yaoZhi = gz[1] ?? ''
     if (!isChong(yaoZhi, riZhi)) return ''
     const wuxing = DIZHI_WUXING[yaoZhi]
     const wang = calcYueLing(wuxing, yueZhi) // 旺/相/休/囚/死

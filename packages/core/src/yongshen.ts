@@ -164,10 +164,12 @@ export function markYongShen(
   }
 
   // 主用神：多现时按 动爻>临世应>首现 选出，取其纳甲地支（应期等下游需要确切地支）
+  // 注意：qinx 元素是 gz5x 产出的「干支+五行」三字（如「甲子水」），地支在 index[1]，
+  // 不能用 slice(-1)（那取的是五行字）。
   const dong = result.dong ?? []
   const shiy = result.shiy ?? []
   const primaryPos = pickPrimary(positions, dong, shiy)
-  const primaryZhi = primaryPos > 0 ? (result.qinx?.[primaryPos - 1] ?? '').slice(-1) : ''
+  const primaryZhi = primaryPos > 0 ? (result.qinx?.[primaryPos - 1]?.[1] ?? '') : ''
 
   return {
     category: cat,
