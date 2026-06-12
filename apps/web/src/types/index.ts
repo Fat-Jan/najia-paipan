@@ -1,7 +1,7 @@
 // 前端类型 — 排盘相关类型直接复用 @najia/core，此处只定义前端特有类型
-import type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo } from '@najia/core'
+import type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo, DayDynamics, YingQi } from '@najia/core'
 
-export type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo }
+export type { HexagramResult, YaoParam, Gender, YaoRelation, GuaShenInfo, DayDynamics, YingQi }
 
 // AI 智能解读请求（走后端 /interpret）
 export interface InterpretRequest {
@@ -33,6 +33,10 @@ export interface InterpretRequest {
     yao_relation?: YaoRelation | null
     // 卦身（月卦身），core 已算好直接透传
     gua_shen?: GuaShenInfo | null
+    // 暗动/日破（core 已算好直接透传）
+    day_dynamics?: DayDynamics | null
+    // 应期候选地支（前端调 calcYingQi 后透传）
+    ying_qi?: YingQi | null
     // 用神标记（问题→用神六亲→爻位 + 原忌仇神），前端算好传后端
     yongshen?: {
       category: string
@@ -44,6 +48,8 @@ export interface InterpretRequest {
       yuanshen: { qin: string; positions: number[] }
       jishen: { qin: string; positions: number[] }
       choushen: { qin: string; positions: number[] }
+      primary_pos: number
+      primary_zhi: string
       note: string
     }
   }

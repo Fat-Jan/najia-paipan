@@ -87,7 +87,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { markYongShen } from '@najia/core'
+import { markYongShen, calcYingQi } from '@najia/core'
 import { interpret } from '@/api/interpret'
 import type { HexagramResult, InterpretResponse } from '@/types'
 
@@ -119,6 +119,10 @@ async function handleInterpret() {
   error.value = ''
   interpretResult.value = null
   try {
+    // 先算一次用神，供 yongshen 与 ying_qi 共用（避免重复计算）
+    const ys = markYongShen(r, question.value)
+    const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false
+    const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null
     interpretResult.value = await interpret({
       hexagram_data: {
         name: r.name,
@@ -146,7 +150,9 @@ async function handleInterpret() {
         // 卦爻动变关系（core 已算好）+ 用神标记（按问题推断）
         yao_relation: r.yao_relation,
         gua_shen: r.gua_shen,
-        yongshen: markYongShen(r, question.value),
+        day_dynamics: r.day_dynamics,
+        ying_qi: yingQi,
+        yongshen: ys,
       },
       question: question.value,
     })

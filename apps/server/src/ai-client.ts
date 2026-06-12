@@ -17,13 +17,15 @@ const SYSTEM_PROMPT = `你是一名六爻纳甲解读分析师，熟悉六亲生
 - 各爻旬空/月破状态（已逐爻标注）
 - 动爻的变爻配置及本→变关系（进退神/回头生克等，逐爻标注）
 - 卦身
+- 暗动/日破（日辰冲静爻：暗动=暗中得力、日破=被冲散，已逐爻算定）
+- 应期候选地支（逢值/逢冲/逢合/出空，已贴固定语义；最终取舍结合卦象动静）
 
 【断卦方法论框架】在已算定数据基础上做综合推理：
 1. 用神旺衰：依据已标注的月令旺衰（旺相休囚死）、日辰生克、旬空、月破，综合定用神强弱（数据已给，只需综合，勿自行推旬空/月破）
 2. 原忌仇神动态：原神助用神、忌神阻用神、仇神助忌神为害。结合各自已标注的旺衰与动静，判断助力/阻力的实际强弱
 3. 世应与动变：世为求测者、应为对方/事体，看生克距离；动爻变爻关系已算定，据此判走势；旬空月破之爻力量打折
 4. 综合权衡：上述信号常相互矛盾（如用神旺却旬空、动而化回头克），需判断当前哪个因素主导，给出倾向性结论，不要简单罗列
-5. 应期：依逢值、逢冲、逢合、出空等推估可能的时间节点
+5. 应期：候选地支已算定并贴语义（逢值/冲/合/出空），你只需结合用神动静空破选择主导应法并表述，不要自行推算冲合
 
 【重要约束】
 - 只依据下方给出的卦象数据推理，不要臆造爻的干支、六亲或变爻配置；数据未提供的不要编造
@@ -106,6 +108,21 @@ function buildUserPrompt(info: HexagramData, question: string): string {
     guaShenSection = `\n【卦身（已算定，参看事体定向，勿自行起卦身）】\n  ${info.gua_shen.note}`
   }
 
+  // 暗动/日破：core 算定的日辰对静爻作用（AI 自行判日冲易错）
+  let dayDynSection = ''
+  if (info.day_dynamics && info.day_dynamics.note) {
+    dayDynSection = `\n【暗动/日破（已算定，勿自行推日冲）】\n  ${info.day_dynamics.note}`
+  }
+
+  // 应期候选地支：core 算定地支 + 固定语义，最终取舍留给 AI
+  let yingQiSection = ''
+  if (info.ying_qi && info.ying_qi.candidates.length > 0) {
+    const lines = info.ying_qi.candidates
+      .map((c) => `  ${c.type}：${c.zhi}（${c.semantic}）`)
+      .join('\n')
+    yingQiSection = `\n【应期候选（用神${info.ying_qi.zhi}，地支已算定，最终取舍结合用神动静空破）】\n${lines}`
+  }
+
   // 主卦逐爻一览：六亲+纳甲+六神+月令旺衰+旬空/月破，便于 AI 定位用神与各爻状态。
   // 旬空/月破由 core 算定（AI 自行推旬空最易错），直接标注、不让 AI 心算。
   const yaoLines = (info.qin6 ?? []).map((q, i) => {
@@ -139,7 +156,7 @@ ${yaoLines.join('\n')}
 月建：${info.yue_zhi ?? '未知'}　日辰：${info.ri_chen ?? '未知'}　动爻：${dongStr}
 
 【变卦信息】
-${bianSection}${hideSection}${relationSection}${guaShenSection}
+${bianSection}${hideSection}${relationSection}${guaShenSection}${dayDynSection}${yingQiSection}
 
 【解读要求】
 1. 用神、原忌仇神、旬空月破、动变关系、卦身均已在上方算定，直接采用，不要自行重新推导或心算
@@ -148,7 +165,7 @@ ${bianSection}${hideSection}${relationSection}${guaShenSection}
    - 结论：直接给出对这个问题的判断（有利/不利/需观望，及大致程度）
    - 依据：说明卦象上是怎么得出的（用神旺衰、世应生克、动变走势）
    - 建议：基于分析给出可操作的方向
-   - 应期：若能判断，给出可能的时间节点及依据
+   - 应期：基于上方已算定的应期候选地支（逢值/冲/合/出空），结合用神动静空破选择主导应法，给出时间节点；勿自行推算冲合
 4. 语气专业平实，不用戏腔，不灌鸡汤
 5. 严格依据上方数据，不臆造爻的干支或变爻配置；信息不足则说明
 

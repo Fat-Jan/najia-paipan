@@ -53,6 +53,8 @@ export interface HexagramData {
     yuanshen: { qin: string; positions: number[] }
     jishen: { qin: string; positions: number[] }
     choushen: { qin: string; positions: number[] }
+    primary_pos: number
+    primary_zhi: string
     note: string
   }
   // 卦身（月卦身），core 算好透传
@@ -62,6 +64,16 @@ export interface HexagramData {
     positions: number[]
     shang_gua: boolean
     note: string
+  } | null
+  // 暗动/日破（core 算好透传）
+  day_dynamics?: {
+    states: string[]
+    note: string
+  } | null
+  // 应期候选地支（前端在 markYongShen 拿到主用神后调 calcYingQi 透传）
+  ying_qi?: {
+    zhi: string
+    candidates: Array<{ type: string; zhi: string; semantic: string }>
   } | null
 }
 
