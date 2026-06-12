@@ -1,7 +1,7 @@
 // 解读效果测试集 — 用 @najia/core 排盘，调真实 LongCat 看解读质量。
 // 跑法：node --env-file=apps/server/.env apps/server/test/interpret-samples.mjs
 // 注意：会真实消耗 LongCat 额度。
-import { compile, markYongShen } from '../../../packages/core/dist/index.js'
+import { compile, markYongShen, calcYingQi } from '../../../packages/core/dist/index.js'
 import { runRuleEngine } from '../dist/rule-engine.js'
 import { interpretHexagram } from '../dist/ai-client.js'
 
@@ -15,6 +15,10 @@ const CASES = [
 ]
 
 function toHexagramData(r, question) {
+  // 先算一次用神，供 yongshen 与 ying_qi 共用（与 InterpretDialog 逻辑一致）
+  const ys = markYongShen(r, question)
+  const yongKong = ys.primary_pos > 0 ? (r.xun_kong?.[ys.primary_pos - 1] ?? false) : false
+  const yingQi = ys.primary_zhi ? calcYingQi(ys.primary_zhi, yongKong) : null
   return {
     name: r.name,
     gong: r.gong,
@@ -38,7 +42,9 @@ function toHexagramData(r, question) {
     hide_seat: r.hide?.seat,
     yao_relation: r.yao_relation,
     gua_shen: r.gua_shen,
-    yongshen: markYongShen(r, question),
+    day_dynamics: r.day_dynamics,
+    ying_qi: yingQi,
+    yongshen: ys,
   }
 }
 
