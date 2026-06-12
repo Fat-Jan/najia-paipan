@@ -82,78 +82,78 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useMessage } from 'naive-ui'
-import { useRouter } from 'vue-router'
-import html2canvas from 'html2canvas'
-import { usePaipanStore } from '@/stores/paipan'
-import HexagramDisplay from '@/components/HexagramDisplay.vue'
-import InterpretDialog from '@/components/InterpretDialog.vue'
-import type { YaoParam } from '@/types'
+import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useMessage } from 'naive-ui';
+import { useRouter } from 'vue-router';
+import html2canvas from 'html2canvas';
+import { usePaipanStore } from '@/stores/paipan';
+import HexagramDisplay from '@/components/HexagramDisplay.vue';
+import InterpretDialog from '@/components/InterpretDialog.vue';
+import type { YaoParam } from '@/types';
 
-const message = useMessage()
-const router = useRouter()
-const store = usePaipanStore()
-const { params, date, gender, title, result, yaoLabels } = storeToRefs(store)
+const message = useMessage();
+const router = useRouter();
+const store = usePaipanStore();
+const { params, date, gender, title, result, yaoLabels } = storeToRefs(store);
 
-const shaking = ref(false)
-const showInterpret = ref(false)
+const shaking = ref(false);
+const showInterpret = ref(false);
 
 const yaoOptions = [
   { label: '少阳 (1)', value: 1 },
   { label: '少阴 (2)', value: 2 },
   { label: '老阳 (3) - 动', value: 3 },
   { label: '老阴 (4) - 动', value: 4 },
-]
+];
 
 function handleReset() {
-  store.reset()
-  message.success('已重置')
+  store.reset();
+  message.success('已重置');
 }
 
 function handleRandom() {
-  store.randomize()
-  message.success('已随机')
+  store.randomize();
+  message.success('已随机');
 }
 
 // 摇卦动画：逐爻模拟三枚硬币
 async function handleShake() {
-  shaking.value = true
+  shaking.value = true;
   for (let i = 0; i < 6; i++) {
-    await new Promise((r) => setTimeout(r, 300))
-    params.value[i] = (Math.floor(Math.random() * 4) + 1) as YaoParam
+    await new Promise((r) => setTimeout(r, 300));
+    params.value[i] = (Math.floor(Math.random() * 4) + 1) as YaoParam;
   }
-  shaking.value = false
-  message.success('摇卦完成')
+  shaking.value = false;
+  message.success('摇卦完成');
 }
 
 // 起卦：本地同步计算（@najia/core），异常在此层提示
 function handlePaipan() {
   try {
-    store.performPaipan()
-    message.success('排盘成功')
+    store.performPaipan();
+    message.success('排盘成功');
   } catch (err) {
-    message.error(err instanceof Error ? err.message : '排盘失败')
+    message.error(err instanceof Error ? err.message : '排盘失败');
   }
 }
 
 async function handleShare() {
-  if (!result.value) return
+  if (!result.value) return;
   try {
-    const el = document.querySelector('.result-section')
-    if (!el) return
+    const el = document.querySelector('.result-section');
+    if (!el) return;
     const canvas = await html2canvas(el as HTMLElement, {
       backgroundColor: '#ffffff',
       scale: 2,
-    })
-    const link = document.createElement('a')
-    link.download = `六爻排盘_${result.value.name}_${Date.now()}.png`
-    link.href = canvas.toDataURL()
-    link.click()
-    message.success('分享图片已生成')
+    });
+    const link = document.createElement('a');
+    link.download = `六爻排盘_${result.value.name}_${Date.now()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    message.success('分享图片已生成');
   } catch {
-    message.error('生成分享图片失败')
+    message.error('生成分享图片失败');
   }
 }
 </script>

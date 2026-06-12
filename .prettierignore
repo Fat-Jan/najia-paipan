@@ -1,0 +1,9 @@
+**/dist/**
+**/node_modules/**
+**/coverage/**
+apps/web/auto-imports.d.ts
+apps/web/components.d.ts
+legacy/**
+pnpm-lock.yaml
+*.md
+packages/core/test/golden.json

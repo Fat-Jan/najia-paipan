@@ -62,20 +62,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { HexagramResult } from '@/types'
+import { computed } from 'vue';
+import type { HexagramResult } from '@/types';
 
-const props = defineProps<{ result: HexagramResult }>()
+const props = defineProps<{ result: HexagramResult }>();
 
-const positionLabels = ['初', '二', '三', '四', '五', '上']
+const positionLabels = ['初', '二', '三', '四', '五', '上'];
 
 // 显示顺序：上爻在顶（index 5 → 0），符合传统六爻自上而下排布
-const displayOrder = [5, 4, 3, 2, 1, 0]
+const displayOrder = [5, 4, 3, 2, 1, 0];
 
 // 爻符号：阳 ⚊ / 阴 ⚋（按 params 原始索引，0=初爻）
-const yaoNames = computed(() =>
-  props.result.params.map((p) => (p === 1 || p === 3 ? '⚊' : '⚋')),
-)
+const yaoNames = computed(() => props.result.params.map((p) => (p === 1 || p === 3 ? '⚊' : '⚋')));
 </script>
 
 <style scoped>

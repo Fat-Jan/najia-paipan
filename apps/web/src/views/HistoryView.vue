@@ -36,7 +36,8 @@
             <div class="detail-item"><strong>性别：</strong>{{ item.gender }}</div>
             <div class="detail-item"><strong>时间：</strong>{{ item.date || '当前时间' }}</div>
             <div class="detail-item">
-              <strong>动爻：</strong>{{ item.result.dong.length > 0 ? item.result.dong.join('、') : '无' }}
+              <strong>动爻：</strong
+              >{{ item.result.dong.length > 0 ? item.result.dong.join('、') : '无' }}
             </div>
           </div>
         </div>
@@ -46,39 +47,39 @@
 </template>
 
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useMessage, useDialog } from 'naive-ui'
-import { useRouter } from 'vue-router'
-import { usePaipanStore } from '@/stores/paipan'
+import { storeToRefs } from 'pinia';
+import { useMessage, useDialog } from 'naive-ui';
+import { useRouter } from 'vue-router';
+import { usePaipanStore } from '@/stores/paipan';
 
-const message = useMessage()
-const dialog = useDialog()
-const router = useRouter()
-const store = usePaipanStore()
-const { history } = storeToRefs(store)
+const message = useMessage();
+const dialog = useDialog();
+const router = useRouter();
+const store = usePaipanStore();
+const { history } = storeToRefs(store);
 
 function formatTime(timestamp: string): string {
-  const date = new Date(timestamp)
-  const diff = Date.now() - date.getTime()
-  if (diff < 60000) return '刚刚'
-  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`
+  const date = new Date(timestamp);
+  const diff = Date.now() - date.getTime();
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
   return (
     date.toLocaleDateString('zh-CN') +
     ' ' +
     date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  )
+  );
 }
 
 function handleRestore(id: string) {
-  store.restoreFromHistory(id)
-  message.success('已恢复到排盘区')
-  router.push('/')
+  store.restoreFromHistory(id);
+  message.success('已恢复到排盘区');
+  router.push('/');
 }
 
 function handleDelete(id: string) {
-  store.removeHistory(id)
-  message.success('已删除')
+  store.removeHistory(id);
+  message.success('已删除');
 }
 
 function handleClear() {
@@ -88,10 +89,10 @@ function handleClear() {
     positiveText: '确定',
     negativeText: '取消',
     onPositiveClick: () => {
-      store.clearHistory()
-      message.success('已清空')
+      store.clearHistory();
+      message.success('已清空');
     },
-  })
+  });
 }
 </script>
 

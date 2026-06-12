@@ -33,10 +33,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { GlobalThemeOverrides } from 'naive-ui'
+import { ref } from 'vue';
+import type { GlobalThemeOverrides } from 'naive-ui';
 
-const theme = ref<'light' | 'dark'>('light')
+const theme = ref<'light' | 'dark'>('light');
 
 const themeOverrides: GlobalThemeOverrides = {
   common: {
@@ -45,7 +45,7 @@ const themeOverrides: GlobalThemeOverrides = {
     primaryColorPressed: '#0d7a46',
     primaryColorSuppl: '#40a96c',
   },
-}
+};
 </script>
 
 <style scoped>

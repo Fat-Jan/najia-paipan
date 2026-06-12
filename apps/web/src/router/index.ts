@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
 
 const routes = [
   {
@@ -13,16 +13,16 @@ const routes = [
     meta: { title: '历史记录 - 六爻排盘' },
     component: () => import('@/views/HistoryView.vue'),
   },
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-})
+});
 
 router.beforeEach((to, _from, next) => {
-  if (to.meta.title) document.title = to.meta.title as string
-  next()
-})
+  if (to.meta.title) document.title = to.meta.title as string;
+  next();
+});
 
-export default router
+export default router;

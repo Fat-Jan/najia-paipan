@@ -1,7 +1,7 @@
 // 用神取用 — 把「占问类别 → 用神六亲 → 所在爻位」确定化。
 // AI 最易错的是「定位」(在哪几爻、是否伏藏)，不是推理；故把定位做成结构化数据。
 // 类别判定优先用显式 category，无则按关键词兜底推断。
-import type { HexagramResult, QuestionCategory, YongShenInfo, ShenRole } from './types.js'
+import type { HexagramResult, QuestionCategory, YongShenInfo, ShenRole } from './types.js';
 
 /**
  * 六亲相生环（唯一数据源）— 按五行相生顺序排列：
@@ -14,23 +14,23 @@ import type { HexagramResult, QuestionCategory, YongShenInfo, ShenRole } from '.
  * - 忌神=克用神者=环上前 2 位（相克 = 相生环上隔一位）
  * - 仇神=生忌神者=环上前 3 位（即忌神的前 1 位）
  */
-const QIN_RING = ['兄弟', '子孙', '妻财', '官鬼', '父母'] as const
+const QIN_RING = ['兄弟', '子孙', '妻财', '官鬼', '父母'] as const;
 
 /** 取相生环上相对用神偏移 offset 位的六亲（offset 为负表示「前几位」） */
 function ringQin(yongshen: string, offset: number): string {
-  const i = QIN_RING.indexOf(yongshen as (typeof QIN_RING)[number])
-  if (i < 0) return ''
-  return QIN_RING[(i + offset + QIN_RING.length * 3) % QIN_RING.length]
+  const i = QIN_RING.indexOf(yongshen as (typeof QIN_RING)[number]);
+  if (i < 0) return '';
+  return QIN_RING[(i + offset + QIN_RING.length * 3) % QIN_RING.length];
 }
 
 /** 在主卦 qin6 中找某六亲的爻位（1-based），可多现 */
 function findPositions(qin6: string[], qin: string): number[] {
-  return qin6.map((q, i) => (q === qin ? i + 1 : -1)).filter((p) => p > 0)
+  return qin6.map((q, i) => (q === qin ? i + 1 : -1)).filter((p) => p > 0);
 }
 
 /** 构造原/忌/仇神角色（六亲名 + 卦中位置） */
 function buildRole(qin6: string[], qin: string): ShenRole {
-  return { qin, positions: findPositions(qin6, qin) }
+  return { qin, positions: findPositions(qin6, qin) };
 }
 
 /**
@@ -41,17 +41,17 @@ function buildRole(qin6: string[], qin: string): ShenRole {
  * @returns 主用神爻位（1-based），positions 空时返回 0
  */
 function pickPrimary(positions: number[], dong: number[], shiy: number[]): number {
-  if (positions.length === 0) return 0
+  if (positions.length === 0) return 0;
   // 动爻优先（dong 是 0-based，position 是 1-based）
-  const dongHit = positions.find((p) => dong.includes(p - 1))
-  if (dongHit !== undefined) return dongHit
+  const dongHit = positions.find((p) => dong.includes(p - 1));
+  if (dongHit !== undefined) return dongHit;
   // 临世应
-  const shi = shiy[0]
-  const ying = shiy[1]
-  const syHit = positions.find((p) => p === shi || p === ying)
-  if (syHit !== undefined) return syHit
+  const shi = shiy[0];
+  const ying = shiy[1];
+  const syHit = positions.find((p) => p === shi || p === ying);
+  if (syHit !== undefined) return syHit;
   // 首现
-  return positions[0]
+  return positions[0];
 }
 
 /** 类别 → 用神六亲。'一般' 无固定用神，兼看世爻 */
@@ -66,7 +66,7 @@ const YONGSHEN_MAP: Record<QuestionCategory, string> = {
   出行: '父母', // 舟车文书
   寻人: '妻财', // 寻人随事而异，默认人口/财物，note 提示
   一般: '',
-}
+};
 
 /** 关键词兜底推断类别（无显式 category 时用） */
 const KEYWORDS: Array<[QuestionCategory, string[]]> = [
@@ -79,15 +79,15 @@ const KEYWORDS: Array<[QuestionCategory, string[]]> = [
   ['文书', ['合同', '文书', '房', '买房', '卖房', '证', '执照', '审批']],
   ['出行', ['出行', '旅', '出差', '搬', '远行', '行程']],
   ['寻人', ['寻人', '找人', '走失', '失物', '丢', '寻物']],
-]
+];
 
 /** 推断占问类别 */
 export function inferCategory(question: string): QuestionCategory {
-  const q = question ?? ''
+  const q = question ?? '';
   for (const [cat, words] of KEYWORDS) {
-    if (words.some((w) => q.includes(w))) return cat
+    if (words.some((w) => q.includes(w))) return cat;
   }
-  return '一般'
+  return '一般';
 }
 
 /**
@@ -101,13 +101,13 @@ export function markYongShen(
   question: string,
   category?: QuestionCategory,
 ): YongShenInfo {
-  const cat = category ?? inferCategory(question)
-  const yongshen = YONGSHEN_MAP[cat]
+  const cat = category ?? inferCategory(question);
+  const yongshen = YONGSHEN_MAP[cat];
 
   // '一般' 无固定用神，兼看世爻
   if (!yongshen) {
-    const shi = result.shiy?.[0]
-    const emptyRole: ShenRole = { qin: '', positions: [] }
+    const shi = result.shiy?.[0];
+    const emptyRole: ShenRole = { qin: '', positions: [] };
     return {
       category: cat,
       yongshen: '',
@@ -121,55 +121,55 @@ export function markYongShen(
       primary_pos: 0,
       primary_zhi: '',
       note: shi ? `无固定用神，以世爻（第${shi}爻）为主体参看。` : '无固定用神，兼看世爻。',
-    }
+    };
   }
 
   // 主卦定位（qin6 含该六亲的爻位，1-based）
   const positions = (result.qin6 ?? [])
     .map((q, i) => (q === yongshen ? i + 1 : -1))
-    .filter((p) => p > 0)
+    .filter((p) => p > 0);
 
-  const multiple = positions.length > 1
+  const multiple = positions.length > 1;
 
   // 主卦不上卦 → 查伏神
-  let hidden = false
-  let hiddenSeat: number[] = []
+  let hidden = false;
+  let hiddenSeat: number[] = [];
   if (positions.length === 0 && result.hide) {
     const seats = (result.hide.qin6 ?? [])
       .map((q, i) => (q === yongshen ? i : -1))
-      .filter((i) => i >= 0)
+      .filter((i) => i >= 0);
     // 仅取确实在 hide.seat（伏藏位）中的
-    const inSeat = seats.filter((i) => result.hide!.seat.includes(i))
+    const inSeat = seats.filter((i) => result.hide!.seat.includes(i));
     if (inSeat.length > 0) {
-      hidden = true
-      hiddenSeat = inSeat.map((i) => i + 1).sort((a, b) => a - b)
+      hidden = true;
+      hiddenSeat = inSeat.map((i) => i + 1).sort((a, b) => a - b);
     }
   }
 
   // 原/忌/仇神：从相生环索引偏移推导（唯一数据源 QIN_RING）
-  const qin6 = result.qin6 ?? []
-  const yuanshen = buildRole(qin6, ringQin(yongshen, -1)) // 生用神者
-  const jishen = buildRole(qin6, ringQin(yongshen, -2)) // 克用神者（环上前 2 位）
-  const choushen = buildRole(qin6, ringQin(yongshen, -3)) // 生忌神者
+  const qin6 = result.qin6 ?? [];
+  const yuanshen = buildRole(qin6, ringQin(yongshen, -1)); // 生用神者
+  const jishen = buildRole(qin6, ringQin(yongshen, -2)); // 克用神者（环上前 2 位）
+  const choushen = buildRole(qin6, ringQin(yongshen, -3)); // 生忌神者
 
-  let note: string
+  let note: string;
   if (hidden) {
-    note = `${cat}以「${yongshen}」为用神，主卦不上卦，伏于第${hiddenSeat.join('、')}爻之下，需待引拔（值日月或动爻冲飞神）方显力。`
+    note = `${cat}以「${yongshen}」为用神，主卦不上卦，伏于第${hiddenSeat.join('、')}爻之下，需待引拔（值日月或动爻冲飞神）方显力。`;
   } else if (positions.length === 0) {
-    note = `${cat}以「${yongshen}」为用神，但主卦与伏神中均未见，用神不上卦，事多无头绪。`
+    note = `${cat}以「${yongshen}」为用神，但主卦与伏神中均未见，用神不上卦，事多无头绪。`;
   } else if (multiple) {
-    note = `${cat}以「${yongshen}」为用神，多现于第${positions.join('、')}爻，取动者或临世应者为主，余为辅。`
+    note = `${cat}以「${yongshen}」为用神，多现于第${positions.join('、')}爻，取动者或临世应者为主，余为辅。`;
   } else {
-    note = `${cat}以「${yongshen}」为用神，在第${positions[0]}爻。`
+    note = `${cat}以「${yongshen}」为用神，在第${positions[0]}爻。`;
   }
 
   // 主用神：多现时按 动爻>临世应>首现 选出，取其纳甲地支（应期等下游需要确切地支）
   // 注意：qinx 元素是 gz5x 产出的「干支+五行」三字（如「甲子水」），地支在 index[1]，
   // 不能用 slice(-1)（那取的是五行字）。
-  const dong = result.dong ?? []
-  const shiy = result.shiy ?? []
-  const primaryPos = pickPrimary(positions, dong, shiy)
-  const primaryZhi = primaryPos > 0 ? (result.qinx?.[primaryPos - 1]?.[1] ?? '') : ''
+  const dong = result.dong ?? [];
+  const shiy = result.shiy ?? [];
+  const primaryPos = pickPrimary(positions, dong, shiy);
+  const primaryZhi = primaryPos > 0 ? (result.qinx?.[primaryPos - 1]?.[1] ?? '') : '';
 
   return {
     category: cat,
@@ -184,5 +184,5 @@ export function markYongShen(
     primary_pos: primaryPos,
     primary_zhi: primaryZhi,
     note,
-  }
+  };
 }

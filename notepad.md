@@ -88,7 +88,7 @@ najia-liuyao/
 5. [x] Vue web app（重构进 apps/web）✅ **build + 类型检查 + dev server 全通过**
 6. [x] Hono server 薄代理 ✅ apps/server（藏 key + CORS 收紧 + 优雅降级）
 7. [x] AI 解读模块 ✅ 真规则引擎（runRuleEngine）替换 legacy 假占位 + prompt 移植
-8. [ ] **深度断卦（后续待处理，优先级中）**：当前 rule-engine 是可解释的启发式规则（五行分布/世应/月令/动爻打分），**非专业六爻断卦完整体系**。后续需补：用神取用、用神旺衰生克、应期推算、进退神、反吟伏吟、卦身、飞伏关系等专业规则库。深化前建议先定位——是做"够用的辅助参考"还是"专业断卦引擎"，二者工作量差一个量级
+8. [x] **深度断卦**✅ 走"core 算定确定性数据 + prompt 约束 AI 只综合不心算"路线（非写完整规则库，省一个量级）。已落地：用神取用、原忌仇神、用神旺衰、进退神/反吟伏吟、卦身、暗动/日破、应期候选地支、主用神选取。详见下方 P2 完成记录
 
 ## 阶段 C 完成记录（前端重构，2026-06-10）
 
@@ -227,3 +227,47 @@ code-reviewer 子代理审查 core 全量，发现并修复时间层 3 个问题
 **完整验证（4卦例新版重跑）**：3/4 成功，变爻全部与 core 真值吻合（不再瞎编），用神取用全对（事业官鬼/投资妻财/婚恋官鬼）。第4卦健康类被 LongCat **security_audit_fail**（医疗内容审核）拦截——非代码 bug，已加错误处理转友好提示（识别 security/audit/safety → "解读内容未通过模型安全审核，请调整问题或稍后重试"）。
 
 **未提交**：本批深度断卦改动 + 前几批（校验限流/batch/bundle）都待 commit。
+
+## P2 深度断卦完成记录（2026-06-12，暗动/日破 + 应期 + 主用神）
+
+**承接 P0+B（原忌仇神/卦身），补完 P2 两项 + 一处收敛。** 设计/计划见 `docs/plans/2026-06-12-day-dynamics-yingqi-{design,plan}.md`。
+
+**设计哲学（延续前批）**：确定的算死喂 AI，有流派分歧/依赖卦象综合的留给 AI。暗动/日破是二值事实可算死；应期含预测成分，只算死候选地支+贴固定语义，最终取舍留 AI。
+
+**三项产出（core）**：
+1. **暗动/日破** `calcDayDynamics`（time-analysis.ts）：静爻被日辰冲 + 旺相=暗动、休囚=日破（《增删卜易》主流派）。compile 内恒算
+2. **应期候选地支** `calcYingQi`（time-analysis.ts）：用神地支 → 逢值(本支)/逢冲(冲支)/逢合(LIUHE_MAP)/出空(旬空时本支)，每类贴固定语义。**不在 core compile 算**（依赖问题推断的主用神），由前端 markYongShen 后调用、走 gua_shen 同款透传链
+3. **主用神选取** `pickPrimary`（yongshen.ts）：多现按 动爻>临世应>首现 选出，补 `primary_pos`/`primary_zhi`。把原来 note 里的文字规则兑现成代码
+4. **冲判定收敛**：三处重复（time-analysis CHONG_MAP / relation 私有 isChong / 月破）收敛到 const.ts 单一 `isChong`（索引差6）+ 新增 `LIUHE_MAP`（六合无数学规律必须显式表）。每处等价替换，对拍兜底
+
+**关键坑（必记教训）**：`qinx` 实为**三字**「干支+五行」（如「甲子水」），地支在 `[1]`、五行在 `[2]`。我误用 `slice(-1)` 取末字 = 取成五行 → `primary_zhi="火"` 查地支表 miss → 应期候选全空、暗动全空。**单元测试当初喂的是假两字「甲子」，slice(-1) 碰巧取到地支 → 测试绿但生产崩**。教训：单元测试手造数据格式与生产 `compile()` 输出不一致 = 测试形同虚设。已修（两处改 `[1]`）+ 加 4 条用真实 compile() 驱动的集成测试堵洞（其中一条用第1爻冲支构造日辰，bug 态必红才算有效守卫）。
+
+**验证**：core 496 测试全绿（+冲合/暗动/应期/主用神/集成）+ build 通过。LongCat 5 例实测验收通过——暗动/日破被 AI 引用（案例1「子日冲午为暗动」、案例4「辰被戌冲日破」），应期不再现场心算改引用 core 候选（案例4 用神辰土逢冲戌/逢合酉/逢值辰，正是 bug 修复后取对地支的证明）。案例5 一般类无用神 ying_qi=null 属预期。
+
+**纯度审查**：core 9 文件 + prompt 全是六爻纳甲专有概念，无梅花/六壬/奇门/四柱算命混入。干支月建日辰只服务卦爻旺衰判断，不排八字命格。
+
+**P2 已全部 commit**（2664c6f core / 4c13c25 透传链 / 17960e1 bug 修复 / 398bbcf 实测验收）。剩 P3 三合局/六合（依赖暗动、收益递减，暂缓）。
+
+## P3 三合局/半合 + lint/format 工程化（2026-06-13，P1+P2 并行）
+
+**用户拍板解冻 P3，与 lint/format 并行（写范围天然隔离：配置文件 vs core/src），两个后台 agent 跑、主控复核物证。**
+
+**P3 三合局/半合（core）**：
+- `SANHE_MAP`（const.ts）：四组显式表 申子辰→水/亥卯未→木/寅午戌→火/巳酉丑→金，每组带 `center`（中神=四正支子午卯酉）。半合不单建表，由 calcSanHe 在 SANHE_MAP 上动态识别（恰现两支）
+- `calcSanHe(qinx)`（time-analysis.ts）：扫六爻地支 → 三支全现=三合局/两支=半合，输出 type/wuxing/zhis/positions/has_center/note。**地支取 `gz[1]`**（避开 P2 那个 slice(-1) 取成五行的坑）。语义边界：只算成局结构+化气方向，是否真成局起用留 AI
+- types 加 `SanHeMatch`/`SanHe`，`HexagramResult.san_he`；compile 内**恒算**（只依赖六爻地支，同暗动路线，非应期的依赖主用神路线）
+- 测试 +10（496→506），含真实 compile() 驱动的集成 describe（乾为天双局/坤为地双局）+ 守卫「qinx 三字取 [1] 而非五行字」脱节洞
+
+**san_he 喂进 AI（透传链一条龙）**：前端 compile 的 `r.san_he` → 前端 InterpretRequest type（types/index.ts import+re-export SanHe）→ server HexagramData type → ai-client 三处（SYSTEM_PROMPT 已算定列表 + sanHeSection + 拼接）。InterpretDialog 显式列字段补 `san_he: r.san_he`
+- **LongCat 7 卦例实测验收通过**（原 5 + 火天大有半合含中神 + 火山旅拱合无中神）：7/7 引用合局；**核心防失败模式成立**——案例2 乾为天双三合局全现，AI 正确断「静卦无动爻引化，三合不成局…潜力待激活」，没把「成局结构」误读成「已成局起用」；案例3 半合「拱合无力/合局受破坏」力度判断也对
+
+**lint/format（配置层，未碰源码）**：
+- 新建 `eslint.config.js`（ESLint 10 flat config，typescript-eslint + eslint-plugin-vue，per-dir globals）+ `.prettierrc` + `.prettierignore`
+- 根 package.json 加 lint/lint:fix/format/format:check + devDeps
+- **golden.json 加进 .prettierignore**（对拍黄金基准，格式化器不该碰）
+- **trash 3 个 `_diag*` 诊断脚本**（开发期对拍调试草稿，对拍已绿使命完成，git rm）
+- `pnpm format` 全量格式化 39 源码文件（golden.json 已 ignore 没动），format:check 转绿
+
+**全量验证**：core 506 + server 22 测试全绿、全 workspace build/typecheck 通过、format:check 全绿。
+
+**未做（留后续）**：P3 六合（六合无数学规律，LIUHE_MAP 已在 P2 建表，calc 未写）；三合局起用的动静引化判定（已交给 AI，未算死）。
