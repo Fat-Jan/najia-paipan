@@ -26,6 +26,8 @@ function toHexagramData(r, question) {
     yue_ling: r.yue_ling ?? undefined,
     yue_zhi: r.yue_zhi ?? undefined,
     ri_chen: r.ri_chen ?? undefined,
+    xun_kong: r.xun_kong ?? undefined,
+    yue_po: r.yue_po ?? undefined,
     dong: r.dong,
     bian_name: r.bian?.name,
     hide_name: r.hide?.name,
@@ -35,6 +37,7 @@ function toHexagramData(r, question) {
     hide_qinx: r.hide?.qinx,
     hide_seat: r.hide?.seat,
     yao_relation: r.yao_relation,
+    gua_shen: r.gua_shen,
     yongshen: markYongShen(r, question),
   }
 }
