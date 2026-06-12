@@ -33,6 +33,27 @@ function buildRole(qin6: string[], qin: string): ShenRole {
   return { qin, positions: findPositions(qin6, qin) }
 }
 
+/**
+ * 从多现的用神爻位中选主用神：动爻 > 临世应 > 首现。
+ * @param positions 用神爻位（1-based）
+ * @param dong 动爻位（0-based）
+ * @param shiy [世, 应, ...]（1-based）
+ * @returns 主用神爻位（1-based），positions 空时返回 0
+ */
+function pickPrimary(positions: number[], dong: number[], shiy: number[]): number {
+  if (positions.length === 0) return 0
+  // 动爻优先（dong 是 0-based，position 是 1-based）
+  const dongHit = positions.find((p) => dong.includes(p - 1))
+  if (dongHit !== undefined) return dongHit
+  // 临世应
+  const shi = shiy[0]
+  const ying = shiy[1]
+  const syHit = positions.find((p) => p === shi || p === ying)
+  if (syHit !== undefined) return syHit
+  // 首现
+  return positions[0]
+}
+
 /** 类别 → 用神六亲。'一般' 无固定用神，兼看世爻 */
 const YONGSHEN_MAP: Record<QuestionCategory, string> = {
   求财: '妻财',
@@ -97,6 +118,8 @@ export function markYongShen(
       yuanshen: emptyRole,
       jishen: emptyRole,
       choushen: emptyRole,
+      primary_pos: 0,
+      primary_zhi: '',
       note: shi ? `无固定用神，以世爻（第${shi}爻）为主体参看。` : '无固定用神，兼看世爻。',
     }
   }
@@ -140,6 +163,12 @@ export function markYongShen(
     note = `${cat}以「${yongshen}」为用神，在第${positions[0]}爻。`
   }
 
+  // 主用神：多现时按 动爻>临世应>首现 选出，取其纳甲地支（应期等下游需要确切地支）
+  const dong = result.dong ?? []
+  const shiy = result.shiy ?? []
+  const primaryPos = pickPrimary(positions, dong, shiy)
+  const primaryZhi = primaryPos > 0 ? (result.qinx?.[primaryPos - 1] ?? '').slice(-1) : ''
+
   return {
     category: cat,
     yongshen,
@@ -150,6 +179,8 @@ export function markYongShen(
     yuanshen,
     jishen,
     choushen,
+    primary_pos: primaryPos,
+    primary_zhi: primaryZhi,
     note,
   }
 }

@@ -9,7 +9,7 @@ import {
 import { calcYaoRelation } from './relation.js'
 import { calcGuaShen } from './guashen.js'
 import {
-  getDaily, dateToYueRiChen, calcYueLing, isYuePo, isXunKong,
+  getDaily, dateToYueRiChen, calcYueLing, isYuePo, isXunKong, calcDayDynamics,
 } from './time-analysis.js'
 import type { HexagramResult, PaipanInput, YueLing, BatchResult } from './types.js'
 
@@ -130,6 +130,11 @@ export function compile(input: PaipanInput): HexagramResult {
 
   // 卦身（月卦身）：纯卦象固有属性，始终计算
   result.gua_shen = calcGuaShen(mark, shiy[0])
+
+  // 暗动/日破：日辰冲静爻，有日辰+月建时算（依赖 qinx/dong/riChen/yueZhi）
+  if (riChen !== null && yueZhi !== null) {
+    result.day_dynamics = calcDayDynamics(qinx, dong, riChen, yueZhi)
+  }
 
   // 与 Python to_dict 一致：时间维度字段仅在非空时附加
   if (yueLing !== null) result.yue_ling = yueLing

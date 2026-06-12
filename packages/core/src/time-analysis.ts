@@ -1,7 +1,8 @@
 // 时间维度断卦 — 从 legacy/najia/najia/{time_analysis,lunar_utils}.py 移植
 // 农历/干支底层用 tyme4ts（6tail TS 原生版）
 import { SolarDay, SolarTime } from 'tyme4ts'
-import { ZHIS, ZHI5, XING5, GANS, isChong, LIUHE_MAP } from './const.js'
+import { ZHIS, ZHIS_DICT, ZHI5, XING5, GANS, isChong, LIUHE_MAP } from './const.js'
+import type { DayDynamics, YingQi } from './types.js'
 
 // 地支→五行字（由 const.ZHI5 + XING5 派生，对齐 time_analysis.DIZHI_WUXING）
 const DIZHI_WUXING: Record<string, string> = Object.fromEntries(
@@ -85,4 +86,59 @@ export function getDaily(
     },
     xkong: kong,
   }
+}
+
+/**
+ * 暗动/日破 — 日辰冲静爻：旺相为暗动（暗中发动、有力），休囚为日破（被冲散、受损）。
+ * 动爻不参与（动爻自有动变关系，日冲动爻属另一套）。
+ * @param qinx 逐爻纳甲干支（如「甲子」，取末字地支）
+ * @param dong 动爻位（0-based），跳过
+ * @param riChen 日辰干支（取末字地支）
+ * @param yueZhi 月建地支（定旺衰）
+ */
+export function calcDayDynamics(
+  qinx: string[],
+  dong: number[],
+  riChen: string,
+  yueZhi: string,
+): DayDynamics {
+  const riZhi = riChen.slice(-1)
+  const hits: string[] = []
+  const states = qinx.map((gz, i) => {
+    if (dong.includes(i)) return '' // 动爻跳过
+    const yaoZhi = gz.slice(-1)
+    if (!isChong(yaoZhi, riZhi)) return ''
+    const wuxing = DIZHI_WUXING[yaoZhi]
+    const wang = calcYueLing(wuxing, yueZhi) // 旺/相/休/囚/死
+    const state = wang === '旺' || wang === '相' ? '暗动' : '日破'
+    hits.push(`第${i + 1}爻${state}`)
+    return state
+  })
+  const note = hits.length > 0 ? `日辰${riZhi}冲：${hits.join('、')}（已算定，暗动者暗中得力、日破者被冲散）。` : ''
+  return { states, note }
+}
+
+/**
+ * 应期候选地支 — 给定主用神地支（+是否旬空），输出四类候选 + 固定语义标签。
+ * 纯查表，不做旺衰筛选、不做最终取舍（"该应哪类"依赖卦象动静且有流派分歧，留给 AI）。
+ * @param yongZhi 主用神地支（空串时返回空候选）
+ * @param isKong 主用神是否旬空（旬空才有「出空」候选）
+ */
+export function calcYingQi(yongZhi: string, isKong: boolean): YingQi {
+  if (!yongZhi || ZHIS_DICT[yongZhi] === undefined) {
+    return { zhi: yongZhi, candidates: [] }
+  }
+  const chongZhi = ZHIS[(ZHIS_DICT[yongZhi] + 6) % 12] // 冲支：索引 +6
+  const heZhi = LIUHE_MAP[yongZhi] ?? ''
+  const candidates: YingQi['candidates'] = [
+    { type: '逢值', zhi: yongZhi, semantic: '用神值日/值月得力之时' },
+    { type: '逢冲', zhi: chongZhi, semantic: '冲动之时，静而逢冲则起' },
+  ]
+  if (heZhi) {
+    candidates.push({ type: '逢合', zhi: heZhi, semantic: '合起或合绊之时' })
+  }
+  if (isKong) {
+    candidates.push({ type: '出空', zhi: yongZhi, semantic: '空者实之（应期共识最强一条）' })
+  }
+  return { zhi: yongZhi, candidates }
 }

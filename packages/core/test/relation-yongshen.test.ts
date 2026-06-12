@@ -286,3 +286,156 @@ describe('用神取用 — 原忌仇神（六亲生克环推导）', () => {
     expect(ys.choushen.qin).toBe('')
   })
 })
+
+describe('主用神选取（primary_pos / primary_zhi）', () => {
+  // 构造带 qinx（纳甲干支）/dong/shiy 的主卦
+  function fakeResult(opts: {
+    qin6: string[]; qinx: string[]; dong?: number[]; shiy?: number[]
+  }): HexagramResult {
+    return {
+      params: [1, 1, 1, 1, 1, 1],
+      mark: '111111',
+      name: 'X',
+      gong: '乾',
+      shiy: opts.shiy ?? [6, 3, 0],
+      qin6: opts.qin6,
+      qinx: opts.qinx,
+      god6: [],
+      dong: opts.dong ?? [],
+      solar: '',
+      lunar: { xkong: '', gz: { year: '', month: '', day: '', hour: '' } },
+      hexagram_type: '',
+    }
+  }
+
+  it('单现 → 直接取该爻', () => {
+    const r = fakeResult({
+      qin6: ['官鬼', '父母', '兄弟', '妻财', '子孙', '父母'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+    })
+    const ys = markYongShen(r, '问事业') // 用神官鬼，第1爻
+    expect(ys.primary_pos).toBe(1)
+    expect(ys.primary_zhi).toBe('子')
+  })
+
+  it('多现且有动爻 → 取动者', () => {
+    const r = fakeResult({
+      qin6: ['妻财', '父母', '兄弟', '妻财', '子孙', '官鬼'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      dong: [3],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(4)
+    expect(ys.primary_zhi).toBe('午')
+  })
+
+  it('多现无动爻但临世应 → 取临世应者', () => {
+    const r = fakeResult({
+      qin6: ['妻财', '父母', '兄弟', '官鬼', '子孙', '妻财'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      shiy: [6, 3, 0],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(6)
+    expect(ys.primary_zhi).toBe('寅')
+  })
+
+  it('多现无动爻无临世应 → 取首现', () => {
+    const r = fakeResult({
+      qin6: ['官鬼', '妻财', '兄弟', '父母', '妻财', '子孙'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      shiy: [1, 4, 0],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(2)
+    expect(ys.primary_zhi).toBe('戌')
+  })
+
+  it('无用神（一般类）→ primary_pos 0、primary_zhi 空', () => {
+    const r = fakeResult({
+      qin6: ['兄弟', '子孙', '妻财', '官鬼', '父母', '兄弟'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+    })
+    const ys = markYongShen(r, '随便问问')
+    expect(ys.primary_pos).toBe(0)
+    expect(ys.primary_zhi).toBe('')
+  })
+})
+
+describe('主用神选取（primary_pos / primary_zhi）', () => {
+  // 构造带 qinx（纳甲干支）/dong/shiy 的主卦
+  function fakeResult(opts: {
+    qin6: string[]; qinx: string[]; dong?: number[]; shiy?: number[]
+  }): HexagramResult {
+    return {
+      params: [1, 1, 1, 1, 1, 1],
+      mark: '111111',
+      name: 'X',
+      gong: '乾',
+      shiy: opts.shiy ?? [6, 3, 0],
+      qin6: opts.qin6,
+      qinx: opts.qinx,
+      god6: [],
+      dong: opts.dong ?? [],
+      solar: '',
+      lunar: { xkong: '', gz: { year: '', month: '', day: '', hour: '' } },
+      hexagram_type: '',
+    }
+  }
+
+  it('单现 → 直接取该爻', () => {
+    const r = fakeResult({
+      qin6: ['官鬼', '父母', '兄弟', '妻财', '子孙', '父母'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+    })
+    const ys = markYongShen(r, '问事业') // 用神官鬼，第1爻
+    expect(ys.primary_pos).toBe(1)
+    expect(ys.primary_zhi).toBe('子')
+  })
+
+  it('多现且有动爻 → 取动者', () => {
+    // 妻财在第1、4爻，第4爻是动爻 → 取第4
+    const r = fakeResult({
+      qin6: ['妻财', '父母', '兄弟', '妻财', '子孙', '官鬼'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      dong: [3],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(4)
+    expect(ys.primary_zhi).toBe('午')
+  })
+
+  it('多现无动爻但临世应 → 取临世应者', () => {
+    // 妻财在第1、6爻，世在第6爻 → 取第6
+    const r = fakeResult({
+      qin6: ['妻财', '父母', '兄弟', '官鬼', '子孙', '妻财'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      shiy: [6, 3, 0],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(6)
+    expect(ys.primary_zhi).toBe('寅')
+  })
+
+  it('多现无动爻无临世应 → 取首现', () => {
+    // 妻财在第2、5爻，世应在1/4 → 取第2（首现）
+    const r = fakeResult({
+      qin6: ['官鬼', '妻财', '兄弟', '父母', '妻财', '子孙'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+      shiy: [1, 4, 0],
+    })
+    const ys = markYongShen(r, '问求财')
+    expect(ys.primary_pos).toBe(2)
+    expect(ys.primary_zhi).toBe('戌')
+  })
+
+  it('无用神（一般类）→ primary_pos 0、primary_zhi 空', () => {
+    const r = fakeResult({
+      qin6: ['兄弟', '子孙', '妻财', '官鬼', '父母', '兄弟'],
+      qinx: ['甲子', '甲戌', '甲申', '甲午', '甲辰', '甲寅'],
+    })
+    const ys = markYongShen(r, '随便问问')
+    expect(ys.primary_pos).toBe(0)
+    expect(ys.primary_zhi).toBe('')
+  })
+})

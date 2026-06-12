@@ -24,6 +24,8 @@ function normalize(obj: Record<string, unknown>): Record<string, unknown> {
   delete o.yao_relation
   // gua_shen 同理：TS 新增卦身字段，Python 黄金数据无，剥离后再比对
   delete o.gua_shen
+  // day_dynamics 同理：TS 新增暗动/日破字段，Python 黄金数据无，剥离后再比对
+  delete o.day_dynamics
   return o
 }
 

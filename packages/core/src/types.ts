@@ -107,6 +107,10 @@ export interface YongShenInfo {
   jishen: ShenRole
   /** 仇神（生忌神者，间接为害） */
   choushen: ShenRole
+  /** 主用神爻位（1-based）；多现按动爻>临世应>首现选出；无用神/不上卦为 0 */
+  primary_pos: number
+  /** 主用神纳甲地支（从 qinx[primary_pos-1] 取末字）；无则空串 */
+  primary_zhi: string
   /** 一句话说明 */
   note: string
 }
@@ -123,6 +127,26 @@ export interface GuaShenInfo {
   shang_gua: boolean
   /** 一句话说明 */
   note: string
+}
+
+/** 暗动/日破 — 日辰对静爻的作用：被日冲 + 旺相=暗动、休囚=日破 */
+export interface DayDynamics {
+  /** 逐爻状态：'暗动' | '日破' | ''（索引 0 = 初爻，与 qinx 对齐） */
+  states: string[]
+  /** 一句话说明（无暗动也无日破时为空串） */
+  note: string
+}
+
+/** 应期候选地支 — 用神逢值/冲/合/出空，每类贴固定语义；最终取舍留给 AI */
+export interface YingQi {
+  /** 主用神地支 */
+  zhi: string
+  /** 候选应期（含类型、地支、固定语义标签） */
+  candidates: Array<{
+    type: '逢值' | '逢冲' | '逢合' | '出空'
+    zhi: string
+    semantic: string
+  }>
 }
 
 /** 农历干支信息 */
@@ -178,6 +202,8 @@ export interface HexagramResult {
   yao_relation?: YaoRelation | null
   /** 卦身（月卦身）；恒附加（任何卦都有世爻可起卦身） */
   gua_shen?: GuaShenInfo | null
+  /** 暗动/日破（日辰作用于静爻）；有日辰+月建时附加 */
+  day_dynamics?: DayDynamics | null
   // 时间维度断卦属性
   yue_ling?: YueLing[] | null
   yue_po?: boolean[] | null
